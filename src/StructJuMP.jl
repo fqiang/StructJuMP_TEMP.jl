@@ -5,6 +5,7 @@ import JuMP # To reexport, should be using (not import)
 import MathProgBase
 import MathProgBase.MathProgSolverInterface
 import ReverseDiffSparse
+import StructJuMPSolverInterface
 
 export StructuredModel, getStructure, getparent, getchildren, getProcIdxSet,
        num_scenarios, @second_stage, getprobability, getMyRank
@@ -41,8 +42,9 @@ function StructuredModel(;solver=JuMP.UnsetSolver(), parent=nothing, same_childr
         @assert comm == MPI.COMM_WORLD
     else
         id = 0
-        MPI.Init()
+        MPI.Init()  #finalized in the StructJuMPSolverInterface.sj_solve
         comm = MPI.COMM_WORLD
+        JuMP.setsolvehook(m,StructJuMPSolverInterface.sj_solve)
     end
     if same_children_as !== nothing
       if !isa(same_children_as, JuMP.Model) || !haskey(same_children_as.ext, :Stochastic)
